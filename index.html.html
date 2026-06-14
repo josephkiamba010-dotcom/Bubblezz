@@ -1,0 +1,422 @@
+<<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubblez</title>
+    <style>
+        :root {
+            --glow-color: #00bcff;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #141420 0%, #08080c 100%);
+            color: #ffffff;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            overflow: hidden; 
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+        }
+
+        /* UI Screens Styling */
+        .screen {
+            position: absolute;
+            background: rgba(10, 10, 18, 0.96);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(0, 188, 255, 0.15);
+            box-shadow: 0 0 50px rgba(0, 188, 255, 0.08);
+            width: 460px;
+            padding: 40px;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            text-align: center;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h1 {
+            font-size: 56px;
+            margin: 0 0 5px 0;
+            color: var(--glow-color);
+            text-shadow: 0 0 20px rgba(0, 188, 255, 0.4);
+            letter-spacing: 4px;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #6c7293;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            padding: 14px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            background: var(--glow-color);
+            color: #0f0f16;
+            border: none;
+            border-radius: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 4px 20px rgba(0, 188, 255, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 188, 255, 0.45);
+            filter: brightness(1.1);
+        }
+
+        /* Closet Panel */
+        .closet-panel {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 20px;
+            border-radius: 14px;
+            margin-bottom: 25px;
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .closet-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .closet-row label {
+            font-size: 12px;
+            color: #a0aec0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .closet-row select {
+            padding: 10px 16px;
+            background: #161624;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            width: 170px;
+        }
+
+        /* HUD layout */
+        #hud {
+            position: absolute;
+            top: 30px;
+            left: 40px;
+            right: 40px;
+            display: none; 
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none; 
+            z-index: 5;
+        }
+
+        .hud-card {
+            background: rgba(10, 10, 18, 0.7);
+            backdrop-filter: blur(6px);
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        /* Live Roast Banner */
+        #roast-banner {
+            font-size: 16px;
+            color: #ff4a4a;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 74, 74, 0.3);
+            max-width: 40%;
+            text-align: center;
+            animation: popText 0.15s ease-out;
+        }
+
+        @keyframes popText {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* The Bubble */
+        #bubble {
+            display: none; 
+            width: 65px;
+            height: 65px;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, rgba(0, 150, 255, 0.35) 50%, rgba(0, 70, 255, 0.65) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 10px 25px rgba(0, 150, 255, 0.15), inset -5px -5px 15px rgba(0,0,0,0.4);
+            z-index: 4;
+            transform-origin: center;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="main-menu" class="screen">
+        <h1>BUBBLEZ</h1>
+        <div class="subtitle">Aim Trainer Labs</div>
+        
+        <div class="closet-panel">
+            <div class="closet-row">
+                <label>Crosshair Style</label>
+                <select id="shape-select" onchange="updateCrosshair()">
+                    <option value="cross">Classic Cross (+)</option>
+                    <option value="dot">Pro Dot (·)</option>
+                    <option value="circle">Circle (o)</option>
+                    <option value="box">Box (口)</option>
+                </select>
+            </div>
+            <div class="closet-row">
+                <label>Neon Color</label>
+                <select id="color-select" onchange="updateCrosshair()">
+                    <option value="lime">Green</option>
+                    <option value="red">Red</option>
+                    <option value="cyan">Cyan</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="white">White</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn" onclick="startGame()">Launch Simulation</button>
+    </div>
+
+    <div id="game-over" class="screen hidden">
+        <h1 style="color: #ff4a4a; text-shadow: 0 0 20px rgba(255,74,74,0.3);">SIM COMPLETE</h1>
+        <div class="subtitle" id="final-roast">Wipe those tears off your keyboard.</div>
+        <p style="font-size: 18px; color: #a0aec0; margin: 0 0 5px 0;">Pops Registered: <span id="final-score" style="color: #fff; font-weight: bold;">0</span></p>
+        <div id="rank-display" style="font-size: 24px; margin-bottom: 30px; font-weight: 700; text-transform: uppercase;">Rank: -</div>
+        <button class="btn" onclick="startGame()">Try Again, If You Dare</button>
+    </div>
+
+    <div id="hud">
+        <div class="hud-card">SCORE: <span id="score" style="color: #00bcff;">0</span></div>
+        <div id="roast-banner"></div>
+        <div class="hud-card">TIME: <span id="timer" style="color: #ff4a4a;">30.00</span>s</div>
+    </div>
+
+    <div id="bubble"></div>
+
+    <script>
+        const mainMenu = document.getElementById('main-menu');
+        const gameOverScreen = document.getElementById('game-over');
+        const hud = document.getElementById('hud');
+        const bubble = document.getElementById('bubble');
+        const scoreDisplay = document.getElementById('score');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const timerDisplay = document.getElementById('timer');
+        const rankDisplay = document.getElementById('rank-display');
+        const roastBanner = document.getElementById('roast-banner');
+        const finalRoast = document.getElementById('final-roast');
+
+        const shapeSelect = document.getElementById('shape-select');
+        const colorSelect = document.getElementById('color-select');
+
+        let score = 0;
+        let timeLeft = 30;
+        let gameInterval;
+        let audioCtx = null;
+
+        // Interactive In-Game Roasts
+        const midGameRoasts = [
+            "Your buns kid 💀",
+            "My grandmother clicks faster than that",
+            "Bro is clicking in slow motion",
+            "Are you playing with a trackpad? 👀",
+            "Absolute bot activity",
+            "Is your mouse broken or just your aim?",
+            "Whiff city 🏙️",
+            "Certified NPC speed",
+            "Ping must be 500ms with this delay",
+            "Pick up the pace, slacker!",
+            "My cat could clear this layout faster 🐈"
+        ];
+
+        // End Game Final Roasts
+        const lowScoreRoasts = [
+            "Uninstalling would be a great career move.",
+            "Honestly, just go back to Tic-Tac-Toe.",
+            "Sending you a map so you can find your target next time.",
+            "GG, your mouse cursor has left the chat."
+        ];
+
+        const highScoreRoasts = [
+            "Okay, fair play. You actually have hands. 🤖",
+            "Clean tracking. Are you cheating?",
+            "Not bad for a human."
+        ];
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playPopSound() {
+            initAudio();
+            if (!audioCtx) return;
+
+            let osc = audioCtx.createOscillator();
+            let gainNode = audioCtx.createGain();
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.frequency.setValueAtTime(380, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.05);
+
+            gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function updateCrosshair() {
+            const shape = shapeSelect.value;
+            const color = colorSelect.value;
+            let svgString = '';
+
+            if (shape === 'cross') {
+                svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><line x1="16" y1="6" x2="16" y2="26" stroke="${color}" stroke-width="2"/><line x1="6" y1="16" x2="26" y2="16" stroke="${color}" stroke-width="2"/></svg>`;
+            } else if (shape === 'dot') {
+                svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="${color}"/></svg>`;
+            } else if (shape === 'circle') {
+                svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="8" stroke="${color}" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="2" fill="${color}"/></svg>`;
+            } else if (shape === 'box') {
+                svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect x="10" y="10" width="12" height="12" stroke="${color}" stroke-width="2" fill="none"/></svg>`;
+            }
+
+            const encodedSvg = encodeURIComponent(svgString);
+            document.body.style.cursor = `url("data:image/svg+xml,${encodedSvg}") 16 16, auto`;
+        }
+
+        // --- HARDCORE CHALLENGE RANKINGS ---
+        function calculateRank(finalScore) {
+            if (finalScore >= 65) return { name: "Aimbot God 👑", color: "#ff00ea" };
+            if (finalScore >= 50) return { name: "Grandmaster Sniper 🎯", color: "#ffb700" };
+            if (finalScore >= 38) return { name: "Diamond Popper 💎", color: "#00f0ff" };
+            if (finalScore >= 25) return { name: "Gold Sharpshooter 🥇", color: "#ffd700" };
+            if (finalScore >= 12) return { name: "Silver Clicker 🥈", color: "#c0c0c0" };
+            return { name: "Bronze Trash Tier 🚮", color: "#cd7f32" };
+        }
+
+        function triggerLiveRoast() {
+            // Pick a random roast from the array
+            const randomIndex = Math.floor(Math.random() * midGameRoasts.length);
+            roastBanner.textContent = midGameRoasts[randomIndex];
+            
+            // Re-trigger the animation trick
+            roastBanner.style.animation = 'none';
+            roastBanner.offsetHeight; // Trigger reflow layout override
+            roastBanner.style.animation = 'popText 0.15s ease-out';
+        }
+
+        function startGame() {
+            initAudio();
+            score = 0;
+            timeLeft = 30;
+            scoreDisplay.textContent = score;
+            timerDisplay.textContent = timeLeft.toFixed(2);
+            roastBanner.textContent = "GO!";
+
+            mainMenu.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            hud.style.display = 'flex';
+            bubble.style.display = 'block';
+
+            moveBubble();
+            gameInterval = setInterval(updateTimer, 16);
+        }
+
+        function moveBubble() {
+            const randomX = Math.random() * (window.innerWidth - 100) + 10;
+            const randomY = Math.random() * (window.innerHeight - 160) + 100;
+            
+            bubble.style.left = randomX + 'px';
+            bubble.style.top = randomY + 'px';
+        }
+
+        function updateTimer() {
+            timeLeft -= 0.016;
+            if (timeLeft <= 0) {
+                timeLeft = 0;
+                endGame();
+            }
+            timerDisplay.textContent = timeLeft.toFixed(2);
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            bubble.style.display = 'none';
+            hud.style.display = 'none';
+
+            finalScoreDisplay.textContent = score;
+            
+            const rank = calculateRank(score);
+            rankDisplay.textContent = `Rank: ${rank.name}`;
+            rankDisplay.style.color = rank.color;
+
+            // Determine final exit screen insult
+            if (score < 25) {
+                const randIdx = Math.floor(Math.random() * lowScoreRoasts.length);
+                finalRoast.textContent = lowScoreRoasts[randIdx];
+                finalRoast.style.color = "#ff4a4a";
+            } else {
+                const randIdx = Math.floor(Math.random() * highScoreRoasts.length);
+                finalRoast.textContent = highScoreRoasts[randIdx];
+                finalRoast.style.color = "#a0aec0";
+            }
+
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        bubble.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            score++;
+            scoreDisplay.textContent = score;
+            playPopSound();
+            moveBubble();
+            
+            // 40% chance to mock the user on click to keep them on edge
+            if (Math.random() < 0.4) {
+                triggerLiveRoast();
+            }
+        });
+
+        updateCrosshair();
+    </script>
+</body>
+</html>
