@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bubblez</title>
+    <title>Bubblez - Aim Trainer Labs</title>
     <style>
         :root {
             --glow-color: #00bcff;
         }
 
         body {
-            background: radial-gradient(circle at center, #141420 0%, #08080c 100%);
+            background: #08080c;
             color: #ffffff;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             margin: 0;
@@ -20,9 +20,18 @@
             justify-content: center;
             align-items: center;
             user-select: none;
+            transition: background 0.8s ease;
         }
 
-        /* UI Screens Styling */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
         .screen {
             position: absolute;
             background: rgba(10, 10, 18, 0.96);
@@ -30,7 +39,7 @@
             border: 2px solid rgba(0, 188, 255, 0.15);
             box-shadow: 0 0 50px rgba(0, 188, 255, 0.08);
             width: 460px;
-            padding: 40px;
+            padding: 35px;
             border-radius: 24px;
             display: flex;
             flex-direction: column;
@@ -39,6 +48,7 @@
             z-index: 10;
             text-align: center;
             animation: fadeIn 0.25s ease-out;
+            box-sizing: border-box;
         }
 
         @keyframes fadeIn {
@@ -75,6 +85,7 @@
             box-sizing: border-box;
             box-shadow: 0 4px 20px rgba(0, 188, 255, 0.25);
             transition: all 0.2s ease;
+            cursor: pointer;
         }
 
         .btn:hover {
@@ -83,7 +94,19 @@
             filter: brightness(1.1);
         }
 
-        /* Closet Panel */
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+            margin-top: 12px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
+        }
+
         .closet-panel {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.06);
@@ -105,11 +128,12 @@
         }
 
         .closet-row label {
-            font-size: 12px;
+            font-size: 11px;
             color: #a0aec0;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
+            text-align: left;
         }
 
         .closet-row select {
@@ -118,12 +142,11 @@
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 14px;
             outline: none;
-            width: 170px;
+            width: 190px;
         }
 
-        /* HUD layout */
         #hud {
             position: absolute;
             top: 30px;
@@ -147,7 +170,26 @@
             letter-spacing: 1px;
         }
 
-        /* Live Roast Banner */
+        #color-target-box {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(10, 10, 18, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 8px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #color-target-indicator {
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 2px;
+            text-shadow: 0 0 10px currentColor;
+        }
+
         #roast-banner {
             font-size: 16px;
             color: #ff4a4a;
@@ -155,7 +197,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             text-shadow: 0 0 10px rgba(255, 74, 74, 0.3);
-            max-width: 40%;
+            max-width: 30%;
             text-align: center;
             animation: popText 0.15s ease-out;
         }
@@ -165,21 +207,6 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
-        /* The Bubble */
-        #bubble {
-            display: none; 
-            width: 65px;
-            height: 65px;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, rgba(0, 150, 255, 0.35) 50%, rgba(0, 70, 255, 0.65) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            position: absolute;
-            box-shadow: 0 10px 25px rgba(0, 150, 255, 0.15), inset -5px -5px 15px rgba(0,0,0,0.4);
-            z-index: 4;
-            transform-origin: center;
-        }
-
-        /* Ad Frame Layout Styling */
         #ad-container {
             position: absolute;
             bottom: 0;
@@ -199,12 +226,22 @@
 </head>
 <body>
 
-    <!-- Main Menu Screen -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Main Menu -->
     <div id="main-menu" class="screen">
         <h1>BUBBLEZ</h1>
         <div class="subtitle">Aim Trainer Labs</div>
         
         <div class="closet-panel">
+            <div class="closet-row">
+                <label>Simulation Mode</label>
+                <select id="mode-select">
+                    <option value="classic">Classic Pop (Flick)</option>
+                    <option value="tracking">Vector Tracking (Follow)</option>
+                    <option value="colorTrail">Color Trail (Prism Runner)</option>
+                </select>
+            </div>
             <div class="closet-row">
                 <label>Crosshair Style</label>
                 <select id="shape-select" onchange="updateCrosshair()">
@@ -233,72 +270,118 @@
     <div id="game-over" class="screen hidden">
         <h1 style="color: #ff4a4a; text-shadow: 0 0 20px rgba(255,74,74,0.3);">SIM COMPLETE</h1>
         <div class="subtitle" id="final-roast">Wipe those tears off your keyboard.</div>
-        <p style="font-size: 18px; color: #a0aec0; margin: 0 0 5px 0;">Pops Registered: <span id="final-score" style="color: #fff; font-weight: bold;">0</span></p>
-        <div id="rank-display" style="font-size: 24px; margin-bottom: 30px; font-weight: 700; text-transform: uppercase;">Rank: -</div>
+        <p style="font-size: 18px; color: #a0aec0; margin: 0 0 5px 0;">Score Registered: <span id="final-score" style="color: #fff; font-weight: bold;">0</span></p>
+        <div id="rank-display" style="font-size: 24px; margin-bottom: 20px; font-weight: 700; text-transform: uppercase;">Rank: -</div>
+        
         <button class="btn" onclick="startGame()">Try Again, If You Dare</button>
+        <button class="btn btn-secondary" onclick="showMainMenu()">Return to Menu</button>
     </div>
 
-    <!-- Gameplay UI -->
+    <!-- HUD -->
     <div id="hud">
         <div class="hud-card">SCORE: <span id="score" style="color: #00bcff;">0</span></div>
+        <div id="color-target-box">
+            <span style="font-size: 10px; color: #6c7293; letter-spacing: 1px;">TARGET COLOR</span>
+            <div id="color-target-indicator">CYAN</div>
+        </div>
         <div id="roast-banner"></div>
         <div class="hud-card">TIME: <span id="timer" style="color: #ff4a4a;">30.00</span>s</div>
     </div>
 
-    <div id="bubble"></div>
-
-    <!-- Ad Unit Container Element -->
     <div id="ad-container">
-        <!-- Once approved, clear the span below and replace it with your AdSense display unit script snippet -->
         <span style="color: #3e3e5a; font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;">Sponsored Content Banner Space</span>
     </div>
 
     <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
         const mainMenu = document.getElementById('main-menu');
         const gameOverScreen = document.getElementById('game-over');
         const hud = document.getElementById('hud');
-        const bubble = document.getElementById('bubble');
         const scoreDisplay = document.getElementById('score');
         const finalScoreDisplay = document.getElementById('final-score');
         const timerDisplay = document.getElementById('timer');
         const rankDisplay = document.getElementById('rank-display');
         const roastBanner = document.getElementById('roast-banner');
         const finalRoast = document.getElementById('final-roast');
+        const colorTargetBox = document.getElementById('color-target-box');
+        const colorTargetIndicator = document.getElementById('color-target-indicator');
 
+        const modeSelect = document.getElementById('mode-select');
         const shapeSelect = document.getElementById('shape-select');
         const colorSelect = document.getElementById('color-select');
 
         let score = 0;
+        let scoreFraction = 0; 
         let timeLeft = 30;
-        let gameInterval;
+        let gameActive = false;
+        let lastTime = 0;
         let audioCtx = null;
+        let mouseX = 0;
+        let mouseY = 0;
+        let gameMode = 'classic';
+
+        // Background system parameters
+        let activeBgStyle = 0; 
+        let bgParticles = [];
+        let bgTime = 0;
+
+        // Target systems setup
+        let classicBubble = { x: 0, y: 0, radius: 32.5 };
+        let trackingBall = {
+            x: 0, y: 0, radius: 25, vx: 0, vy: 0, baseSpeed: 260, changeDirTimer: 0, isTargeted: false
+        };
+
+        // Color Trail Mode State
+        const PALETTE = [
+            { name: 'CYAN', hex: '#00f0ff' },
+            { name: 'MAGENTA', hex: '#ff007f' },
+            { name: 'YELLOW', hex: '#ffe600' },
+            { name: 'LIME', hex: '#39ff14' },
+            { name: 'ORANGE', hex: '#ff6600' }
+        ];
+        let targetColorIndex = 0;
+        let currentColorIndex = 0;
+        let colorCycleTimer = 0;
+        let targetSwitchTimer = 0;
+        let trailHistory = [];
 
         const midGameRoasts = [
-            "Your buns kid 💀",
-            "My grandmother clicks faster than that",
-            "Bro is clicking in slow motion",
-            "Are you playing with a trackpad? 👀",
-            "Absolute bot activity",
-            "Is your mouse broken or just your aim?",
-            "Whiff city 🏙️",
-            "Certified NPC speed",
-            "Ping must be 500ms with this delay",
-            "Pick up the pace, slacker!",
-            "My cat could clear this layout faster 🐈"
+            "Your buns kid 💀", "My grandmother clicks faster than that", "Bro is clicking in slow motion",
+            "Are you playing with a trackpad? 👀", "Absolute bot activity", "Is your mouse broken or just your aim?",
+            "Whiff city 🏙️", "Certified NPC speed", "Ping must be 500ms with this delay",
+            "Pick up the pace, slacker!", "My cat could clear this layout faster 🐈"
         ];
 
         const lowScoreRoasts = [
-            "Uninstalling would be a great career move.",
-            "Honestly, just go back to Tic-Tac-Toe.",
-            "Sending you a map so you can find your target next time.",
-            "GG, your mouse cursor has left the chat."
+            "Uninstalling would be a great career move.", "Honestly, just go back to Tic-Tac-Toe.",
+            "Sending you a map so you can find your target next time.", "GG, your mouse cursor has left the chat."
         ];
 
         const highScoreRoasts = [
-            "Okay, fair play. You actually have hands. 🤖",
-            "Clean tracking. Are you cheating?",
-            "Not bad for a human."
+            "Okay, fair play. You actually have hands. 🤖", "Clean tracking. Are you cheating?", "Not bad for a human."
         ];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initBgParticles();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function initBgParticles() {
+            bgParticles = [];
+            for (let i = 0; i < 45; i++) {
+                bgParticles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 1,
+                    speed: Math.random() * 40 + 20
+                });
+            }
+        }
+        resizeCanvas();
 
         function initAudio() {
             if (!audioCtx) {
@@ -309,19 +392,14 @@
         function playPopSound() {
             initAudio();
             if (!audioCtx) return;
-
             let osc = audioCtx.createOscillator();
             let gainNode = audioCtx.createGain();
-
             osc.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-
             osc.frequency.setValueAtTime(380, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.05);
-
             gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-
             osc.start();
             osc.stop(audioCtx.currentTime + 0.05);
         }
@@ -346,70 +424,369 @@
         }
 
         function calculateRank(finalScore) {
-            if (finalScore >= 65) return { name: "Aimbot God 👑", color: "#ff00ea" };
-            if (finalScore >= 50) return { name: "Grandmaster Sniper 🎯", color: "#ffb700" };
-            if (finalScore >= 38) return { name: "Diamond Popper 💎", color: "#00f0ff" };
-            if (finalScore >= 25) return { name: "Gold Sharpshooter 🥇", color: "#ffd700" };
-            if (finalScore >= 12) return { name: "Silver Clicker 🥈", color: "#c0c0c0" };
+            const normalizedScore = (gameMode === 'tracking' || gameMode === 'colorTrail') ? finalScore / 4 : finalScore;
+            if (normalizedScore >= 65) return { name: "Aimbot God 👑", color: "#ff00ea" };
+            if (normalizedScore >= 50) return { name: "Grandmaster Sniper 🎯", color: "#ffb700" };
+            if (normalizedScore >= 38) return { name: "Diamond Popper 💎", color: "#00f0ff" };
+            if (normalizedScore >= 25) return { name: "Gold Sharpshooter 🥇", color: "#ffd700" };
+            if (normalizedScore >= 12) return { name: "Silver Clicker 🥈", color: "#c0c0c0" };
             return { name: "Bronze Trash Tier 🚮", color: "#cd7f32" };
         }
 
         function triggerLiveRoast() {
             const randomIndex = Math.floor(Math.random() * midGameRoasts.length);
             roastBanner.textContent = midGameRoasts[randomIndex];
-            
             roastBanner.style.animation = 'none';
             roastBanner.offsetHeight; 
             roastBanner.style.animation = 'popText 0.15s ease-out';
         }
 
+        function spawnClassicBubble() {
+            classicBubble.x = Math.random() * (canvas.width - 100) + 50;
+            classicBubble.y = Math.random() * (canvas.height - 240) + 100;
+        }
+
+        function resetTrackingBall() {
+            trackingBall.x = canvas.width / 2;
+            trackingBall.y = (canvas.height - 95) / 2;
+            trackingBall.baseSpeed = 260;
+            trackingBall.changeDirTimer = 0;
+            setRandomVelocity();
+        }
+
+        function setRandomVelocity() {
+            const difficultyMultiplier = 1 + (score / 300);
+            const currentSpeed = trackingBall.baseSpeed * difficultyMultiplier;
+            const angle = Math.random() * Math.PI * 2;
+            trackingBall.vx = Math.cos(angle) * currentSpeed;
+            trackingBall.vy = Math.sin(angle) * currentSpeed;
+            trackingBall.changeDirTimer = Math.max(0.15, 0.5 - (score / 800)) + Math.random() * 0.3;
+        }
+
+        function updateTargetColorHUD() {
+            const targetColor = PALETTE[targetColorIndex];
+            colorTargetIndicator.textContent = targetColor.name;
+            colorTargetIndicator.style.color = targetColor.hex;
+        }
+
+        function updateMenuBackground() {
+            document.body.style.background = "radial-gradient(circle at center, #141420 0%, #08080c 100%)";
+        }
+        updateMenuBackground();
+
         function startGame() {
             initAudio();
             score = 0;
+            scoreFraction = 0;
             timeLeft = 30;
+            gameMode = modeSelect.value;
             scoreDisplay.textContent = score;
             timerDisplay.textContent = timeLeft.toFixed(2);
             roastBanner.textContent = "GO!";
 
+            activeBgStyle = Math.floor(Math.random() * 3) + 1;
+
             mainMenu.classList.add('hidden');
             gameOverScreen.classList.add('hidden');
             hud.style.display = 'flex';
-            bubble.style.display = 'block';
 
-            moveBubble();
-            gameInterval = setInterval(updateTimer, 16);
+            if (gameMode === 'colorTrail') {
+                colorTargetBox.style.display = 'flex';
+                targetColorIndex = Math.floor(Math.random() * PALETTE.length);
+                currentColorIndex = (targetColorIndex + 1) % PALETTE.length;
+                colorCycleTimer = 1.0;
+                targetSwitchTimer = 5.0;
+                trailHistory = [];
+                updateTargetColorHUD();
+                resetTrackingBall();
+            } else {
+                colorTargetBox.style.display = 'none';
+                if (gameMode === 'classic') {
+                    spawnClassicBubble();
+                } else {
+                    resetTrackingBall();
+                }
+            }
+
+            gameActive = true;
+            lastTime = performance.now();
+            requestAnimationFrame(gameLoop);
         }
 
-        function moveBubble() {
-            const randomX = Math.random() * (window.innerWidth - 100) + 10;
-            // Kept boundary space clear from the bottom ad container box
-            const randomY = Math.random() * (window.innerHeight - 240) + 100;
-            
-            bubble.style.left = randomX + 'px';
-            bubble.style.top = randomY + 'px';
+        function showMainMenu() {
+            gameOverScreen.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+            activeBgStyle = 0;
+            updateMenuBackground();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        function updateTimer() {
-            timeLeft -= 0.016;
+        function gameLoop(currentTime) {
+            if (!gameActive) return;
+            let dt = (currentTime - lastTime) / 1000;
+            if (dt > 0.1) dt = 0.1; 
+            lastTime = currentTime;
+
+            update(dt);
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function update(dt) {
+            timeLeft -= dt;
             if (timeLeft <= 0) {
                 timeLeft = 0;
                 endGame();
             }
             timerDisplay.textContent = timeLeft.toFixed(2);
+
+            bgTime += dt;
+
+            if (activeBgStyle === 2) {
+                bgParticles.forEach(p => {
+                    p.y -= p.speed * dt;
+                    if (p.y < -10) {
+                        p.y = canvas.height + 10;
+                        p.x = Math.random() * canvas.width;
+                    }
+                });
+            }
+
+            if (gameMode === 'classic') return;
+
+            // Shared physics for Vector Tracking & Color Trail
+            trackingBall.x += trackingBall.vx * dt;
+            trackingBall.y += trackingBall.vy * dt;
+            trackingBall.changeDirTimer -= dt;
+
+            const padding = trackingBall.radius + 10;
+            if (trackingBall.x < padding) { trackingBall.x = padding; trackingBall.vx *= -1; }
+            if (trackingBall.x > canvas.width - padding) { trackingBall.x = canvas.width - padding; trackingBall.vx *= -1; }
+            if (trackingBall.y < padding + 50) { trackingBall.y = padding + 50; trackingBall.vy *= -1; }
+            if (trackingBall.y > canvas.height - 95 - padding) { trackingBall.y = canvas.height - 95 - padding; trackingBall.vy *= -1; }
+
+            if (trackingBall.changeDirTimer <= 0) {
+                setRandomVelocity();
+            }
+
+            let distance = Math.hypot(mouseX - trackingBall.x, mouseY - trackingBall.y);
+
+            if (gameMode === 'tracking') {
+                if (distance <= trackingBall.radius) {
+                    trackingBall.isTargeted = true;
+                    scoreFraction += dt * 110; 
+                    if (scoreFraction >= 1) {
+                        let fullPoints = Math.floor(scoreFraction);
+                        score += fullPoints;
+                        scoreFraction -= fullPoints;
+                        scoreDisplay.textContent = score;
+                        if (Math.random() < 0.02) triggerLiveRoast();
+                    }
+                } else {
+                    trackingBall.isTargeted = false;
+                }
+            } else if (gameMode === 'colorTrail') {
+                // Color Trail Logic
+                colorCycleTimer -= dt;
+                if (colorCycleTimer <= 0) {
+                    currentColorIndex = (currentColorIndex + 1) % PALETTE.length;
+                    colorCycleTimer = Math.max(0.6, 1.2 - (score / 400));
+                }
+
+                targetSwitchTimer -= dt;
+                if (targetSwitchTimer <= 0) {
+                    targetColorIndex = Math.floor(Math.random() * PALETTE.length);
+                    updateTargetColorHUD();
+                    targetSwitchTimer = 4.5 + Math.random() * 2.5;
+                }
+
+                // Append positions for trail line rendering
+                trailHistory.unshift({ x: trackingBall.x, y: trackingBall.y, color: PALETTE[currentColorIndex].hex });
+                if (trailHistory.length > 25) trailHistory.pop();
+
+                // Check hit conditions: Must tracking-hover head AND ball must match required target color
+                const colorMatches = currentColorIndex === targetColorIndex;
+                if (distance <= trackingBall.radius && colorMatches) {
+                    trackingBall.isTargeted = true;
+                    scoreFraction += dt * 140; 
+                    if (scoreFraction >= 1) {
+                        let fullPoints = Math.floor(scoreFraction);
+                        score += fullPoints;
+                        scoreFraction -= fullPoints;
+                        scoreDisplay.textContent = score;
+                        if (Math.random() < 0.02) triggerLiveRoast();
+                    }
+                } else {
+                    trackingBall.isTargeted = false;
+                }
+            }
+        }
+
+        function drawAnimatedBackground() {
+            if (activeBgStyle === 1) {
+                document.body.style.background = "#09090f";
+                ctx.save();
+                ctx.strokeStyle = 'rgba(0, 188, 255, 0.04)';
+                ctx.lineWidth = 1;
+                const gridSize = 60;
+                const offset = (bgTime * 25) % gridSize;
+                
+                for (let x = offset; x < canvas.width; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                for (let y = offset; y < canvas.height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+            } else if (activeBgStyle === 2) {
+                document.body.style.background = "#050a0f";
+                ctx.save();
+                bgParticles.forEach(p => {
+                    ctx.fillStyle = 'rgba(0, 255, 200, 0.09)';
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.restore();
+
+            } else if (activeBgStyle === 3) {
+                let shiftX = Math.sin(bgTime * 0.4) * 15;
+                let shiftY = Math.cos(bgTime * 0.3) * 15;
+                document.body.style.background = `radial-gradient(circle at ${50 + shiftX}% ${40 + shiftY}%, #190e2b 0%, #06060c 100%)`;
+            }
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawAnimatedBackground();
+
+            if (gameMode === 'classic') {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(classicBubble.x, classicBubble.y, classicBubble.radius, 0, Math.PI * 2);
+                let gradient = ctx.createRadialGradient(
+                    classicBubble.x - 8, classicBubble.y - 8, 0,
+                    classicBubble.x, classicBubble.y, classicBubble.radius
+                );
+                gradient.addColorStop(0, 'rgba(255,255,255,0.5)');
+                gradient.addColorStop(0.5, 'rgba(0, 150, 255, 0.35)');
+                gradient.addColorStop(1, 'rgba(0, 70, 255, 0.65)');
+                ctx.fillStyle = gradient;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.lineWidth = 1;
+                ctx.shadowColor = 'rgba(0, 150, 255, 0.3)';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            } else if (gameMode === 'tracking') {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(trackingBall.x, trackingBall.y, trackingBall.radius, 0, Math.PI * 2);
+
+                let gradient = ctx.createRadialGradient(
+                    trackingBall.x - 5, trackingBall.y - 5, 0,
+                    trackingBall.x, trackingBall.y, trackingBall.radius
+                );
+
+                if (trackingBall.isTargeted) {
+                    gradient.addColorStop(0, '#ffffff');
+                    gradient.addColorStop(0.4, '#00ffcc');
+                    gradient.addColorStop(1, '#00b3ff');
+                    ctx.shadowColor = '#00ffcc';
+                    ctx.shadowBlur = 25;
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                } else {
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+                    gradient.addColorStop(0.5, 'rgba(255, 0, 110, 0.5)');
+                    gradient.addColorStop(1, 'rgba(150, 0, 255, 0.8)');
+                    ctx.shadowColor = 'rgba(255, 0, 110, 0.3)';
+                    ctx.shadowBlur = 15;
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 1;
+                }
+
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            } else if (gameMode === 'colorTrail') {
+                // Render Color Trail ribbon behind head
+                ctx.save();
+                for (let i = 0; i < trailHistory.length - 1; i++) {
+                    let pt = trailHistory[i];
+                    let nextPt = trailHistory[i + 1];
+                    let alpha = (1 - (i / trailHistory.length)) * 0.6;
+                    ctx.beginPath();
+                    ctx.moveTo(pt.x, pt.y);
+                    ctx.lineTo(nextPt.x, nextPt.y);
+                    ctx.strokeStyle = pt.color;
+                    ctx.globalAlpha = alpha;
+                    ctx.lineWidth = Math.max(2, (1 - (i / trailHistory.length)) * 14);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                // Render Head Ball
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(trackingBall.x, trackingBall.y, trackingBall.radius, 0, Math.PI * 2);
+                
+                const activeColor = PALETTE[currentColorIndex].hex;
+                let gradient = ctx.createRadialGradient(
+                    trackingBall.x - 5, trackingBall.y - 5, 0,
+                    trackingBall.x, trackingBall.y, trackingBall.radius
+                );
+
+                if (trackingBall.isTargeted) {
+                    gradient.addColorStop(0, '#ffffff');
+                    gradient.addColorStop(0.5, activeColor);
+                    gradient.addColorStop(1, '#ffffff');
+                    ctx.shadowColor = activeColor;
+                    ctx.shadowBlur = 30;
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 3;
+                } else {
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+                    gradient.addColorStop(0.6, activeColor);
+                    gradient.addColorStop(1, 'rgba(10, 10, 20, 0.8)');
+                    ctx.shadowColor = activeColor;
+                    ctx.shadowBlur = 12;
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.lineWidth = 1.5;
+                }
+
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            }
         }
 
         function endGame() {
-            clearInterval(gameInterval);
-            bubble.style.display = 'none';
+            gameActive = false;
             hud.style.display = 'none';
+            colorTargetBox.style.display = 'none';
+            
+            activeBgStyle = 0;
+            updateMenuBackground();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             finalScoreDisplay.textContent = score;
-            
             const rank = calculateRank(score);
             rankDisplay.textContent = `Rank: ${rank.name}`;
             rankDisplay.style.color = rank.color;
 
-            if (score < 25) {
+            const targetLowScore = (gameMode === 'tracking' || gameMode === 'colorTrail') ? 100 : 25;
+            if (score < targetLowScore) {
                 const randIdx = Math.floor(Math.random() * lowScoreRoasts.length);
                 finalRoast.textContent = lowScoreRoasts[randIdx];
                 finalRoast.style.color = "#ff4a4a";
@@ -422,16 +799,30 @@
             gameOverScreen.classList.remove('hidden');
         }
 
-        bubble.addEventListener('mousedown', (e) => {
-            e.stopPropagation();
-            score++;
-            scoreDisplay.textContent = score;
-            playPopSound();
-            moveBubble();
-            
-            if (Math.random() < 0.4) {
-                triggerLiveRoast();
+        window.addEventListener('mousedown', (e) => {
+            if (!gameActive) return;
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+
+            if (gameMode === 'classic') {
+                let dist = Math.hypot(mouseX - classicBubble.x, mouseY - classicBubble.y);
+                if (dist <= classicBubble.radius) {
+                    score++;
+                    scoreDisplay.textContent = score;
+                    playPopSound();
+                    spawnClassicBubble();
+                    if (Math.random() < 0.4) triggerLiveRoast();
+                }
             }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        document.querySelectorAll('.screen').forEach(scr => {
+            scr.addEventListener('mousedown', (e) => e.stopPropagation());
         });
 
         updateCrosshair();
