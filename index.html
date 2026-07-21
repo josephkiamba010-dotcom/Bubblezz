@@ -424,13 +424,9 @@
         }
 
         function calculateRank(finalScore) {
-            const normalizedScore = (gameMode === 'tracking' || gameMode === 'colorTrail') ? finalScore / 4 : finalScore;
-            if (normalizedScore >= 65) return { name: "Aimbot God 👑", color: "#ff00ea" };
-            if (normalizedScore >= 50) return { name: "Grandmaster Sniper 🎯", color: "#ffb700" };
-            if (normalizedScore >= 38) return { name: "Diamond Popper 💎", color: "#00f0ff" };
-            if (normalizedScore >= 25) return { name: "Gold Sharpshooter 🥇", color: "#ffd700" };
-            if (normalizedScore >= 12) return { name: "Silver Clicker 🥈", color: "#c0c0c0" };
-            return { name: "Bronze Trash Tier 🚮", color: "#cd7f32" };
+            if (finalScore >= 41) return { name: "Gold 🥇", color: "#ffd700" };
+            if (finalScore >= 21) return { name: "Silver 🥈", color: "#c0c0c0" };
+            return { name: "Bronze 🥉", color: "#cd7f32" };
         }
 
         function triggerLiveRoast() {
@@ -574,7 +570,8 @@
             if (gameMode === 'tracking') {
                 if (distance <= trackingBall.radius) {
                     trackingBall.isTargeted = true;
-                    scoreFraction += dt * 110; 
+                    // Earn 2 points per second
+                    scoreFraction += dt * 2; 
                     if (scoreFraction >= 1) {
                         let fullPoints = Math.floor(scoreFraction);
                         score += fullPoints;
@@ -608,7 +605,8 @@
                 const colorMatches = currentColorIndex === targetColorIndex;
                 if (distance <= trackingBall.radius && colorMatches) {
                     trackingBall.isTargeted = true;
-                    scoreFraction += dt * 140; 
+                    // Earn 2 points per second
+                    scoreFraction += dt * 2; 
                     if (scoreFraction >= 1) {
                         let fullPoints = Math.floor(scoreFraction);
                         score += fullPoints;
@@ -785,8 +783,7 @@
             rankDisplay.textContent = `Rank: ${rank.name}`;
             rankDisplay.style.color = rank.color;
 
-            const targetLowScore = (gameMode === 'tracking' || gameMode === 'colorTrail') ? 100 : 25;
-            if (score < targetLowScore) {
+            if (score < 21) {
                 const randIdx = Math.floor(Math.random() * lowScoreRoasts.length);
                 finalRoast.textContent = lowScoreRoasts[randIdx];
                 finalRoast.style.color = "#ff4a4a";
@@ -798,6 +795,11 @@
 
             gameOverScreen.classList.remove('hidden');
         }
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
 
         window.addEventListener('mousedown', (e) => {
             if (!gameActive) return;
@@ -811,21 +813,10 @@
                     scoreDisplay.textContent = score;
                     playPopSound();
                     spawnClassicBubble();
-                    if (Math.random() < 0.4) triggerLiveRoast();
+                    if (Math.random() < 0.1) triggerLiveRoast();
                 }
             }
         });
-
-        window.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
-
-        document.querySelectorAll('.screen').forEach(scr => {
-            scr.addEventListener('mousedown', (e) => e.stopPropagation());
-        });
-
-        updateCrosshair();
     </script>
 </body>
 </html>
